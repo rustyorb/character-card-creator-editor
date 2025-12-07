@@ -1,4 +1,3 @@
-
 import React from 'react';
 import * as Cards from 'character-card-utils';
 import { stringify } from '../utils/cardParser';
@@ -10,7 +9,7 @@ const v1Card: Cards.V1 = {
   scenario: 'Sui tells a nice story',
   description: '{{char}} is very happy.',
   personality: '',
-  mes_example: "{{user}}: You're cool.\\n{{char}}: Thanks!",
+  mes_example: "<START>\n{{user}}: You're cool.\n{{char}}: Thanks!",
 };
 
 const v2CardNoCharacterBook: Cards.V2 = {
@@ -22,7 +21,7 @@ const v2CardNoCharacterBook: Cards.V2 = {
     scenario: 'Sui tells a nice story',
     description: '{{char}} is very happy.',
     personality: '',
-    mes_example: "{{user}}: You're cool.\\n{{char}}: Thanks!",
+    mes_example: "<START>\n{{user}}: You're cool.\n{{char}}: Thanks!",
     creator_notes: 'Sui is nice',
     system_prompt: "Enter roleplay mode. Write {{char}}'s next reply.",
     post_history_instructions: 'Your reply must end with "desu".',

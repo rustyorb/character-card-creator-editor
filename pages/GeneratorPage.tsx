@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Type } from '@google/genai';
 import * as Cards from 'character-card-utils';
@@ -23,7 +22,10 @@ const cardSchema = {
         personality: { type: Type.STRING, description: "A description of the character's personality traits and quirks." },
         scenario: { type: Type.STRING, description: "The context or setting where the user will interact with the character." },
         first_mes: { type: Type.STRING, description: "The first message the character says to the user to start the conversation." },
-        mes_example: { type: Type.STRING, description: "Example dialogue. Use {{user}}: and {{char}}: to denote speakers. Separate turns with a newline character (\\n)." },
+        mes_example: { 
+            type: Type.STRING, 
+            description: "Example conversations. It MUST be expected that botmakers format example conversations like this: <START> {{user}}: hi {{char}}: hello. <START> marks the beginning of a new conversation." 
+        },
         creator_notes: { type: Type.STRING, description: "Notes from the creator about how to portray the character." },
         system_prompt: { type: Type.STRING, description: "Instructions for the AI model on how to behave during roleplay." },
         post_history_instructions: { type: Type.STRING, description: "Instructions applied after chat history is loaded." },
@@ -131,7 +133,17 @@ const GeneratorPage: React.FC = () => {
             The JSON output must strictly adhere to the provided schema.
             Ensure all fields are populated with creative and relevant content.
             The 'spec' must be 'chara_card_v2' and 'spec_version' must be '2.0'.
-            Do not include any text before or after the JSON object.`;
+            Do not include any text before or after the JSON object.
+            
+            IMPORTANT for mes_example:
+            You MUST separate distinct conversations with <START> on a new line.
+            Example:
+            <START>
+            {{user}}: Hello
+            {{char}}: Hi there!
+            <START>
+            {{user}}: Bye
+            {{char}}: See you.`;
             
             const generatedCard = await generateContent({
                 prompt: `User prompt: "${prompt}"`,
@@ -199,6 +211,8 @@ const GeneratorPage: React.FC = () => {
             const systemInstruction = `You are an expert character card editor.
             You are regenerating the field "${fieldName}".
             
+            ${fieldName === 'mes_example' ? 'IMPORTANT: You MUST use <START> on a new line to mark the beginning of each new conversation block. Use {{user}}: and {{char}}: to denote speakers.' : ''}
+
             INPUTS:
             1. CONTEXT: The character details you must be consistent with.
             2. CURRENT DRAFT: The user's current text for this field.
