@@ -1,0 +1,5 @@
+{
+  "name": "Character Card Utils",
+  "description": "A web-based toolkit to validate, backfill, and update V1 and V2 character cards using the character-card-utils library. Provides examples and live demonstrations of the library's features.",
+  "requestFramePermissions": []
+}
