@@ -1,22 +1,15 @@
 
 import React, { useState } from 'react';
-// FIX: Import GoogleGenAI and Type from @google/genai according to guidelines.
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
 import * as Cards from 'character-card-utils';
 import TextBox from '../components/TextBox';
 import InteractiveCard from '../components/InteractiveCard';
 import { embedCardInPng, readCardFromPng } from '../utils/pngEmbedder';
 import { setIn } from '../utils/immutableUpdate';
+import { generateContent } from '../utils/aiService';
+import { useSettings } from '../contexts/SettingsContext';
 
-let ai: GoogleGenAI | null = null;
-// FIX: Initialize GoogleGenAI using the API_KEY from environment variables as per guidelines.
-if (process.env.API_KEY) {
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-} else {
-    console.error("API_KEY environment variable not set.");
-}
-
-// FIX: Define a response schema for the V2 character card to get structured JSON output from Gemini.
+// Define a response schema for the V2 character card to get structured JSON output.
 const cardSchema = {
   type: Type.OBJECT,
   properties: {
@@ -52,14 +45,22 @@ const cardSchema = {
   required: ['spec', 'spec_version', 'data']
 };
 
-
 const GeneratorPage: React.FC = () => {
+    const { useCustomEndpoint, customApiUrl, customApiKey, customModel } = useSettings();
     const [prompt, setPrompt] = useState('');
     const [card, setCard] = useState<Cards.V2 | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [regeneratingField, setRegeneratingField] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [pngFile, setPngFile] = useState<File | null>(null);
+
+    const getAIConfig = () => ({
+        useCustomEndpoint,
+        customApiUrl,
+        customApiKey,
+        customModel,
+        defaultGeminiKey: process.env.API_KEY
+    });
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || !e.target.files[0]) return;
@@ -110,8 +111,8 @@ const GeneratorPage: React.FC = () => {
     };
 
     const handleGenerate = async () => {
-        if (!ai) {
-            setError('Gemini API key is not configured. Please set the API_KEY environment variable.');
+        if (!process.env.API_KEY && !useCustomEndpoint) {
+            setError('Gemini API key is not configured and custom endpoint is disabled. Please configure in Settings.');
             return;
         }
         if (!prompt.trim()) {
@@ -132,18 +133,12 @@ const GeneratorPage: React.FC = () => {
             The 'spec' must be 'chara_card_v2' and 'spec_version' must be '2.0'.
             Do not include any text before or after the JSON object.`;
             
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: `User prompt: "${prompt}"`,
-                config: {
-                    systemInstruction,
-                    responseMimeType: "application/json",
-                    responseSchema: cardSchema,
-                },
-            });
-
-            const jsonString = response.text;
-            const generatedCard = JSON.parse(jsonString);
+            const generatedCard = await generateContent({
+                prompt: `User prompt: "${prompt}"`,
+                systemInstruction,
+                responseMimeType: "application/json",
+                responseSchema: cardSchema,
+            }, getAIConfig());
 
             if (generatedCard.data) {
                 generatedCard.data.extensions = {};
@@ -172,7 +167,7 @@ const GeneratorPage: React.FC = () => {
     };
 
     const handleRegenerate = async (fieldPath: string) => {
-        if (!ai || !card) return;
+        if (!card) return;
 
         setRegeneratingField(fieldPath);
         setError(null);
@@ -186,13 +181,6 @@ const GeneratorPage: React.FC = () => {
             const d = card.data;
 
             // Chain Logic:
-            // 1. Description
-            // 2. Personality (considers Description)
-            // 3. Scenario (considers Personality & Description)
-            // 4. First Message (considers Scenario, Personality, Description)
-            // 5. Message Example (considers First Message, Scenario, Personality, Description)
-            // Others: Consider full context
-            
             if (fieldName === 'personality') {
                 contextData = { name: d.name, description: d.description };
             } else if (fieldName === 'scenario') {
@@ -204,7 +192,6 @@ const GeneratorPage: React.FC = () => {
             } else if (fieldName === 'description') {
                  contextData = { name: d.name };
             } else {
-                // Default fallback: use all data (except the field itself) to steer generation
                 contextData = { ...d };
                 delete (contextData as any)[fieldName];
             }
@@ -223,7 +210,7 @@ const GeneratorPage: React.FC = () => {
             - CREATIVITY: If "CURRENT DRAFT" is empty or generic, generate creative content based strictly on the CONTEXT.
             - OUTPUT: Return a JSON object with a single key "${fieldName}".`;
 
-            const contents = `
+            const prompt = `
             CONTEXT:
             ${JSON.stringify(contextData, null, 2)}
 
@@ -248,18 +235,12 @@ const GeneratorPage: React.FC = () => {
                 required: [fieldName]
             };
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents,
-                config: {
-                    systemInstruction,
-                    responseMimeType: "application/json",
-                    responseSchema: fieldSchema,
-                },
-            });
-
-            const jsonString = response.text;
-            const result = JSON.parse(jsonString);
+            const result = await generateContent({
+                prompt,
+                systemInstruction,
+                responseMimeType: "application/json",
+                responseSchema: fieldSchema,
+            }, getAIConfig());
 
             if (result[fieldName] !== undefined) {
                  handleUpdate(fieldPath, result[fieldName]);
@@ -315,20 +296,30 @@ const GeneratorPage: React.FC = () => {
         }
     };
 
-    if (!ai) {
+    const hasApiKey = process.env.API_KEY || (useCustomEndpoint && customApiUrl);
+
+    if (!hasApiKey) {
         return (
             <div className="p-4 bg-red-900/50 border border-red-700 text-red-300 rounded-lg">
                 <h4 className="font-bold mb-2">Configuration Error</h4>
-                <p>The Gemini API key is not configured. Please set the <code>API_KEY</code> environment variable and restart the application.</p>
+                <p>No API configuration found. Please check your environment variables or configure a Custom Endpoint in the <strong>Settings</strong> page.</p>
             </div>
         )
     }
 
     return (
         <div>
-            <h2 className="text-2xl font-semibold mb-4 border-b border-gray-600 pb-2 text-cyan-300">
-                AI Character Card Generator & Editor
-            </h2>
+            <div className="flex justify-between items-center mb-4 border-b border-gray-600 pb-2">
+                <h2 className="text-2xl font-semibold text-cyan-300">
+                    AI Character Card Generator
+                </h2>
+                {useCustomEndpoint && (
+                    <span className="text-xs font-mono bg-teal-900 text-teal-300 px-2 py-1 rounded border border-teal-700">
+                        Using: {customModel || 'Custom API'}
+                    </span>
+                )}
+            </div>
+            
             <p className="mb-6 text-gray-400">
                 Create new characters from scratch using AI, or import existing cards (JSON or PNG) to edit and refine them.
             </p>

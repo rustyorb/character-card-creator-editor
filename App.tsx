@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ActivePage } from './types';
 import Menu from './components/Menu';
@@ -6,6 +7,7 @@ import BackfillerPage from './pages/BackfillerPage';
 import V1UpdaterPage from './pages/V1UpdaterPage';
 import ExamplesPage from './pages/ExamplesPage';
 import GeneratorPage from './pages/GeneratorPage';
+import SettingsPage from './pages/SettingsPage';
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<ActivePage>('generator');
@@ -24,6 +26,8 @@ const App: React.FC = () => {
         return <V1UpdaterPage />;
       case 'examples':
         return <ExamplesPage />;
+      case 'settings':
+        return <SettingsPage />;
       default:
         return <GeneratorPage />;
     }

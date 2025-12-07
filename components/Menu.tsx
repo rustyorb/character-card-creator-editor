@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ActivePage } from '../types';
 import MenuItem from './MenuItem';
@@ -38,6 +39,11 @@ const Menu: React.FC<MenuProps> = ({ activePage, setActivePage }) => (
       label="Example Cards"
       onClick={() => setActivePage('examples')}
       active={activePage === 'examples'}
+    />
+    <MenuItem
+      label="Settings"
+      onClick={() => setActivePage('settings')}
+      active={activePage === 'settings'}
     />
     <MenuItem
       label="Library (NPM)"
