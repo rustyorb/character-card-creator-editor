@@ -61,7 +61,9 @@ const GeneratorPage: React.FC = () => {
         customApiUrl,
         customApiKey,
         customModel,
-        defaultGeminiKey: import.meta.env.VITE_GEMINI_API_KEY
+        defaultApiKey: process.env.LLM_API_KEY,
+        defaultApiBase: process.env.LLM_API_BASE,
+        defaultModel: process.env.LLM_MODEL
     });
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,8 +115,8 @@ const GeneratorPage: React.FC = () => {
     };
 
     const handleGenerate = async () => {
-        if (!import.meta.env.VITE_GEMINI_API_KEY && !useCustomEndpoint) {
-            setError('Gemini API key is not configured and custom endpoint is disabled. Please configure in Settings.');
+        if (!process.env.LLM_API_KEY && !useCustomEndpoint) {
+            setError('LLM API key is not configured and custom endpoint is disabled. Please configure in Settings.');
             return;
         }
         if (!prompt.trim()) {
@@ -310,7 +312,7 @@ const GeneratorPage: React.FC = () => {
         }
     };
 
-    const hasApiKey = import.meta.env.VITE_GEMINI_API_KEY || (useCustomEndpoint && customApiUrl);
+    const hasApiKey = process.env.LLM_API_KEY || (useCustomEndpoint && customApiUrl);
 
     if (!hasApiKey) {
         return (
