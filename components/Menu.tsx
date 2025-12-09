@@ -46,6 +46,11 @@ const Menu: React.FC<MenuProps> = ({ activePage, setActivePage }) => (
       active={activePage === 'settings'}
     />
     <MenuItem
+      label="Prompts"
+      onClick={() => setActivePage('prompts')}
+      active={activePage === 'prompts'}
+    />
+    <MenuItem
       label="Library (NPM)"
       onClick={() => window.open('https://www.npmjs.com/package/character-card-utils', '_blank')}
       isExternal

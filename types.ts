@@ -6,4 +6,5 @@ export type ActivePage =
   | 'backfillerWithObsolescenceNotice'
   | 'v1Updater'
   | 'examples'
-  | 'settings';
+  | 'settings'
+  | 'prompts';

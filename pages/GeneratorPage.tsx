@@ -7,6 +7,7 @@ import { embedCardInPng, readCardFromPng } from '../utils/pngEmbedder';
 import { setIn } from '../utils/immutableUpdate';
 import { generateContent } from '../utils/aiService';
 import { useSettings } from '../contexts/SettingsContext';
+import { usePrompts } from '../contexts/PromptsContext';
 
 // Define a response schema for the V2 character card to get structured JSON output.
 const cardSchema = {
@@ -49,6 +50,7 @@ const cardSchema = {
 
 const GeneratorPage: React.FC = () => {
     const { useCustomEndpoint, customApiUrl, customApiKey, customModel } = useSettings();
+    const { generatorSystemPrompt, regeneratorSystemPrompt } = usePrompts();
     const [prompt, setPrompt] = useState('');
     const [card, setCard] = useState<Cards.V2 | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -130,26 +132,9 @@ const GeneratorPage: React.FC = () => {
         setPngFile(null);
 
         try {
-            const systemInstruction = `You are an expert character card creator for dense, detailed, complete roleplaying chatbots.
-            Your task is to generate a complete and detailed character card in the V2 JSON format based on the user's prompt.
-            The JSON output must strictly adhere to the provided schema.
-            Ensure all fields are populated with creative and relevant content.
-            The 'spec' must be 'chara_card_v2' and 'spec_version' must be '2.0'.
-            Do not include any text before or after the JSON object.
-            
-            IMPORTANT for mes_example:
-            You MUST separate distinct conversations with <START> on a new line.
-            Example:
-            <START>
-            {{user}}: Hello
-            {{char}}: Hi there!
-            <START>
-            {{user}}: Bye
-            {{char}}: See you.`;
-            
             const generatedCard = await generateContent({
                 prompt: `User prompt: "${prompt}"`,
-                systemInstruction,
+                systemInstruction: generatorSystemPrompt,
                 responseMimeType: "application/json",
                 responseSchema: cardSchema,
             }, getAIConfig());
@@ -210,21 +195,13 @@ const GeneratorPage: React.FC = () => {
                 delete (contextData as any)[fieldName];
             }
 
-            const systemInstruction = `You are an expert character card editor.
-            You are regenerating the field "${fieldName}".
-            
-            ${fieldName === 'mes_example' ? 'IMPORTANT: You MUST use <START> on a new line to mark the beginning of each new conversation block. Use {{user}}: and {{char}}: to denote speakers.' : ''}
+            const mesExampleInstruction = fieldName === 'mes_example'
+                ? 'IMPORTANT: You MUST use <START> on a new line to mark the beginning of each new conversation block. Use {{user}}: and {{char}}: to denote speakers.'
+                : '';
 
-            INPUTS:
-            1. CONTEXT: The character details you must be consistent with.
-            2. CURRENT DRAFT: The user's current text for this field.
-
-            INSTRUCTIONS:
-            - Generate a new value for "${fieldName}".
-            - CONSISTENCY: Your output must fit perfectly with the provided CONTEXT.
-            - STEERING: If "CURRENT DRAFT" contains text, you MUST use it as the primary instruction and source material. Refine, expand, or format the user's draft while maintaining their intent.
-            - CREATIVITY: If "CURRENT DRAFT" is empty or generic, generate creative content based strictly on the CONTEXT.
-            - OUTPUT: Return a JSON object with a single key "${fieldName}".`;
+            const systemInstruction = regeneratorSystemPrompt
+                .replaceAll('{{fieldName}}', fieldName)
+                .replaceAll('{{mesExampleInstruction}}', mesExampleInstruction);
 
             const prompt = `
             CONTEXT:
