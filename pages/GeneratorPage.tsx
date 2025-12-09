@@ -61,7 +61,7 @@ const GeneratorPage: React.FC = () => {
         customApiUrl,
         customApiKey,
         customModel,
-        defaultGeminiKey: process.env.API_KEY
+        defaultGeminiKey: import.meta.env.VITE_GEMINI_API_KEY
     });
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +113,7 @@ const GeneratorPage: React.FC = () => {
     };
 
     const handleGenerate = async () => {
-        if (!process.env.API_KEY && !useCustomEndpoint) {
+        if (!import.meta.env.VITE_GEMINI_API_KEY && !useCustomEndpoint) {
             setError('Gemini API key is not configured and custom endpoint is disabled. Please configure in Settings.');
             return;
         }
@@ -310,7 +310,7 @@ const GeneratorPage: React.FC = () => {
         }
     };
 
-    const hasApiKey = process.env.API_KEY || (useCustomEndpoint && customApiUrl);
+    const hasApiKey = import.meta.env.VITE_GEMINI_API_KEY || (useCustomEndpoint && customApiUrl);
 
     if (!hasApiKey) {
         return (
