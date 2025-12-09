@@ -8,6 +8,7 @@ import V1UpdaterPage from './pages/V1UpdaterPage';
 import ExamplesPage from './pages/ExamplesPage';
 import GeneratorPage from './pages/GeneratorPage';
 import SettingsPage from './pages/SettingsPage';
+import PromptsPage from './pages/PromptsPage';
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<ActivePage>('generator');
@@ -28,6 +29,8 @@ const App: React.FC = () => {
         return <ExamplesPage />;
       case 'settings':
         return <SettingsPage />;
+      case 'prompts':
+        return <PromptsPage />;
       default:
         return <GeneratorPage />;
     }

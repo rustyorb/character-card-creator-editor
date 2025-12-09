@@ -13,23 +13,37 @@ interface AIConfig {
   customApiUrl: string;
   customApiKey: string;
   customModel: string;
-  defaultGeminiKey?: string;
+  defaultApiKey?: string;
+  defaultApiBase?: string;
+  defaultModel?: string;
 }
 
 export const generateContent = async (params: GenerationParams, config: AIConfig): Promise<any> => {
   if (config.useCustomEndpoint) {
     return generateWithOpenAICompatible(params, config);
-  } else {
-    return generateWithGemini(params, config);
   }
+
+  // If env variables point to an OpenAI compatible endpoint
+  if (config.defaultApiBase) {
+      const envConfig = {
+          ...config,
+          customApiUrl: config.defaultApiBase,
+          customApiKey: config.defaultApiKey || '',
+          customModel: config.defaultModel || 'gpt-3.5-turbo'
+      };
+      return generateWithOpenAICompatible(params, envConfig);
+  }
+
+  // Fallback to Gemini if no Base URL is provided (assuming defaultApiKey is for Gemini)
+  return generateWithGemini(params, config);
 };
 
 const generateWithGemini = async (params: GenerationParams, config: AIConfig) => {
-  if (!config.defaultGeminiKey) {
-    throw new Error('Gemini API Key is missing. Please set API_KEY in environment or configure a custom endpoint in Settings.');
+  if (!config.defaultApiKey) {
+    throw new Error('LLM API Key is missing. Please set LLM_API_KEY in environment or configure a custom endpoint in Settings.');
   }
 
-  const ai = new GoogleGenAI({ apiKey: config.defaultGeminiKey });
+  const ai = new GoogleGenAI({ apiKey: config.defaultApiKey });
   
   // Clean up schema for Gemini if needed, though usually passing the object is fine.
   // The SDK expects specific Type enums. Assuming the caller passes a valid schema object.
