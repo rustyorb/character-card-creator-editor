@@ -40,8 +40,8 @@ Built with React and Vite, it leverages Large Language Models (LLMs) to generate
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/malfoyslastname/chara-card-utils-web.git
-   cd chara-card-utils-web
+   git clone https://github.com/rustyorb/character-card-creator-editor.git
+   cd character-card-creator-editor
    ```
 
 2. **Install dependencies:**

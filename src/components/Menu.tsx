@@ -68,7 +68,7 @@ const Menu: React.FC<MenuProps> = ({ activePage, setActivePage }) => (
     <MenuItem
       label="Source Code"
       onClick={() =>
-        window.open('https://github.com/malfoyslastname/chara-card-utils-web', '_blank')
+        window.open('https://github.com/rustyorb/character-card-creator-editor', '_blank')
       }
       isExternal
     />
